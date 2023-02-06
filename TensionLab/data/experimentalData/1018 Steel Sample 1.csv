@@ -1,14 +1,4 @@
-Specimen label,"1018_1"
-End date,"Monday, January 24, 2022"
-Thickness,"6.24000",mm
-Width,"12.38000",mm
-Final length,"57.02000",mm
-Axial gauge length,"25.40000",mm
-Transverse gauge length,"12.38000",mm
-Crosshead Rate,"5.00",mm/min
-
-Time,Extension,Load,Axial Strain,Transverse Strain
-(s),(mm),(N),(mm/mm),(mm/mm)
+Time (s),Extension (mm),Load (N),Axial Strain (mm/mm),Transverse Strain (mm/mm)
 "0.000","0.000","0.10","0.00000","0.00000"
 "0.100","0.004","21.82","0.00000","0.00000"
 "0.200","0.014","214.86","0.00001","0.00000"
