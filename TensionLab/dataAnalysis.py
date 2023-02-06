@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from os import listdir
 
 # Material properties
-materialConstants = pd.read_csv(r'data/materialConstants.csv')
+materialConstants = pd.read_csv(r'TensionLab\data\materialConstants.csv')
 # 6061-T6 Aluminum
 elasticModulusAl = materialConstants.at[0,'Elastic Modulus (Pa)']
 yieldStressAl = materialConstants.at[0,'Yield Stress (Pa)']
@@ -28,17 +28,15 @@ poissonComp21 = (elasticModulusComp2/elasticModulusComp1)*poissonComp12
 
 # Exmperimental Data
 
-Files = [x for x in listdir(r'data\experimentalData') if '.csv' in x]
+Files = [x for x in listdir('TensionLab\data\experimentalData') if '.csv' in x]
 # Dimensioning
-
-
 
 # Test Data
 Data = {x:{} for x in Files}
-print(Data)
-# for File in Files:
-#     Data[File] = pd.read_csv(r'data\experimentalData/',File)
+# Data0 = pd.read_csv('TensionLab\data\experimentalData',Files[0])
 
+for File in Files:
+    Data[File] = pd.read_csv(r'data\experimentalData/',File)
 
 
 
