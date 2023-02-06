@@ -30,24 +30,25 @@ poissonComp21 = (elasticModulusComp2/elasticModulusComp1)*poissonComp12
 
 Files = [x for x in listdir('TensionLab\data\experimentalData') if '.csv' in x]
 # Dimensioning
-
+materialConstants = pd.read_csv(r'TensionLab\data\sampleDimensions.csv')
 # Test Data
 Data = {x:{} for x in Files}
-# Data0 = pd.read_csv('TensionLab\data\experimentalData',Files[0])
 
 for File in Files:
-    Data[File] = pd.read_csv(r'data\experimentalData/',File)
+    Data[File] = pd.read_csv('TensionLab\data\experimentalData\\' + File,sep=";")
 
 
-
-
-
-
-
-
-
-
-
+for File in Files:
+    emptyList = [[]]*len(Data[File].index) #This is an empty list with the same length as the data file
+    #Note, when you multiply Python lists it just copies the list, e.g. [[1]]*3=[[1],[1],[1]]
+    
+    #Here's some example new dictionary calculations
+    Data[File]['Stress (MPa)'] = Data[File]['Load (N)']#/Area #this adds stress to the data
+    
+    #You'll need to do calculations here
+    Data[File]['Instantaneous Area (mm^2)'] = emptyList #Calculate the instantaneous area using the original dimensions and the transverse strain
+    Data[File]['True Stress (MPa)'] = emptyList #Add in the true stress here
+    Data[File]['True Strain (mm/mm)'] = emptyList #Add in the true strain here,
 
 
 

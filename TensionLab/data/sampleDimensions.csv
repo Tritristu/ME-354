@@ -1,0 +1,7 @@
+Properties,1018 Steel Sample 1,1018 Steel Sample 2,1018 Steel Sample 3,6061 Aluminum Sample 1,6061 Aluminum Sample 2,6061 Aluminum Sample 3,CFRP 0 Degree Sample 1,CFRP 0 Degree Sample 2,CFRP 0 Degree Sample 3,CFRP 90 Degree Sample 1,CFRP 90 Degree Sample 2,CFRP 0 Degree Sample 3
+Thickness(m),6.24e-3,6.3e-3,6.28e-3,6.48e-3,6.4e-3,6.4e-3,1.02e-3,1.1e-3,1e-3,2.12e-3,2.33e-3,2.28e-3
+Width(m),12.38e-3,12.4e-3,12.33e-3,12.32e-3,12.02e-3,12.1e-3,18.6e-3,18.48e-3,18.4e-3,19.05e-3,18.27e-3,18.91e-3
+Final length(m),57.02e-3,57.11e-3,57.08e-3,55.8e-3,55.5e-3,56.22e-3,,,,
+Axial gauge length(m),25.4e-3,25.4e-3,25.4e-3,25.4e-3,25.4e-3,25.4e-3,25.4e-3,25.4e-3,25.4e-3,25.4e-3,25.4e-3,25.4e-3
+Transverse gauge length(m),12.38e-3,12.38e-3,12.33e-3,12.32e-3,12.02e-3,12.1e-3,18.6e-3,18.48e-3,18.4e-3,19.05e-3,18.27e-3,18.91e-3
+Crosshead Rate(mm/min),5,5,5,5,5,5,5,5,5,5,5,5
