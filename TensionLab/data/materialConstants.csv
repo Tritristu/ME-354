@@ -1,0 +1,5 @@
+Material,Elastic Modulus (Pa),Yield Stress (Pa),Poisson's ratio,Density (kg/m^3)
+6061-T6 Aluminum,69e9,275e6,0.33,2.7
+1018 Steel,205e9,370e6,0.29,7.87
+Carbon Fiber (IM7),274e9,5585e6,0.28,1.78
+CYCOM 5250-4 (BMI Resin),4.6e9,103e6,0.39,1.25
