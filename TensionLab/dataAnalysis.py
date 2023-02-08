@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from os import listdir
 
 # Material properties
-materialConstants = pd.read_csv(r'TensionLab\data\materialConstants.csv')
+materialConstants = pd.read_csv('materialConstants.csv')
 # 6061-T6 Aluminum
 elasticModulusAl = materialConstants.at[0,'Elastic Modulus (Pa)']
 yieldStressAl = materialConstants.at[0,'Yield Stress (Pa)']
@@ -29,25 +29,26 @@ poissonComp21 = (elasticModulusComp2/elasticModulusComp1)*poissonComp12
 
 # Exmperimental Data
 
-Files = [x for x in listdir('TensionLab\data\experimentalData') if '.csv' in x]
+Files = [x for x in listdir('experimentalData') if '.csv' in x]
 # Dimensioning
-sampleDimensions = pd.read_csv(r'TensionLab\data\sampleDimensions.csv')
+sampleDimensions = pd.read_csv(r'sampleDimensions.csv')
 # Test Data
 Data = {x:{} for x in Files}
 
 for File in Files:
-    Data[File] = pd.read_csv('TensionLab\data\experimentalData\\' + File,sep=";")
+    Data[File] = pd.read_csv('experimentalData/' + File,sep=";")
 
+"""
 for File in Files:
     emptyList = [[]]*len(Data[File].index) #This is an empty list with the same length as the data file
     #Note, when you multiply Python lists it just copies the list, e.g. [[1]]*3=[[1],[1],[1]]
-    
+
     #Here's some example new dictionary calculations
     Data[File]['Stress (MPa)'] = Data[File]['Load (N)']#/Area #this adds stress to the data
-    
+
     #You'll need to do calculations here
     Data[File]['Instantaneous Area (mm^2)'] = emptyList #Calculate the instantaneous area using the original dimensions and the transverse strain
     Data[File]['True Stress (MPa)'] = emptyList #Add in the true stress here
     Data[File]['True Strain (mm/mm)'] = emptyList #Add in the true strain here,
-
+"""
 
