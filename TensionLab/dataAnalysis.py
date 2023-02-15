@@ -4,6 +4,8 @@ import scipy as sp
 import matplotlib.pyplot as plt
 from os import listdir
 from numpy import mean,std
+from numpy import trapz
+
 
 from scipy.stats import linregress  # This is a linear regression function built into the Scipy library.
 
@@ -35,9 +37,11 @@ poissonComp21 = (elasticModulusComp2/elasticModulusComp1)*poissonComp12
 # Exmperimental Data
 
 Files = [x for x in listdir('experimentalData') if '.csv' in x]
+Steel = [x for x in listdir('experimentalData') if '1018' in x]
+Aluminum = [x for x in listdir('experimentalData') if '6061' in x]
+CFRP0 = [x for x in listdir('experimentalData') if 'CFRP 0' in x]
+CFRP90 = [x for x in listdir('experimentalData') if 'CFRP 90' in x]
 # Dimensioning
-sampleDimensions = pd.read_csv(r'sampleDimensions.csv')
-
 # Test Data
 Data = {x:{} for x in Files}
 
@@ -96,6 +100,8 @@ ax1.legend()
 ax2.legend()
 
 
+
+
 def modulusFit(Strain, Stress, a, b):
     '''This is a linear fit to data between the data indices for a and b. Note, this will
     return an error if a or b are outside the length of Strain and Stress.'''
@@ -120,7 +126,7 @@ a1 = 125
 b1 = 200
 a2 = 20
 b2 = 150
-for File in Files:
+for File in CFRP90:
     # Save dummy variables to make the code cleaner below
     strain = Data[File]['Strain (mm/mm)'].values
     stress = Data[File]['Stress (MPa)'].values
@@ -137,13 +143,13 @@ for File in Files:
     #ax.plot(strain[a2], stress[a2], 'bd')
     #ax.plot(strain[b2], stress[b2], 'bs')
     #     ax.plot(strain[a2:b2],stress[a2:b2],'b.') #this will show all the data we're fitting
-
     # Plot the fits
-    ax.plot(X1, Y1, label='Fit1, E=' + str(round(E1 * 1e-3, 1)) + ' GPa')
+    plt.plot(X1, Y1, label='Fit1, E=' + str(round(E1 * 1e-3, 1)) + ' GPa' + File)
     #ax.plot(X2, Y2, label='Fit2, E=' + str(round(E2 * 1e-3, 1)) + ' GPa')
 
-ax.set_xlim(left = 0, right=0.004)
-ax.set_ylim(bottom = 0, top=400)
+
+#ax.set_xlim(left = 0, right=0.006)
+#ax.set_ylim(bottom = 0, top=800)
 plt.title("Modulus Fit")
 plt.ylabel('Stress (MPa)')
 plt.xlabel('Strain (mm/mm)')
@@ -151,8 +157,8 @@ plt.legend()
 
 
 #FIND WHAT VALUES OF A AND B ARE USED BY OTHER PEOPLE OR FIND THEM YOURSELF
-a = [125,125,125,125]
-b = [200,200,200,200]
+a = [125,100,250,125]
+b = [200,180,700,200]
 youngsModuli = []
 avgYoungsModuli = []
 stdYoungsModuli = []
@@ -169,15 +175,11 @@ for File in Files:
     # Use the two fits
     E,C,R,X,Y = modulusFit(strain,stress,a[int(inc/3)],b[int(inc/3)])
     youngsModuli += [E]
-    #print(File)
     ER2Values += [R**2]
     inc = inc+1
 for i in range(4):
     avgYoungsModuli+= [mean(youngsModuli[i*3:(i+1)*3])/1000]
     stdYoungsModuli+= [np.std(youngsModuli[i*3:(i+1)*3])/1000]
-
-print(avgYoungsModuli)
-print(stdYoungsModuli)
 
 #finding poisons ratio
 
@@ -196,12 +198,11 @@ def PoissonFit(axialStrain, transverseStrain, a, b):
          Y]  # these are points that you can plot to visualize the data being fit, inverted from y=nu*x+C, x=(y-C)/nu
     return nu, R, X, Y
 
-
 fig = plt.figure(5)
 ax = fig.gca()
-a = 0;
-b = 10  # Note: you will have to play with these values for a given test type
-for File in Files:
+a = 225
+b = 275  # Note: you will have to play with these values for a given test type
+for File in Aluminum:
     # Create dummy variables to make plotting easier
     aStrain = Data[File]['Axial Strain (mm/mm)'].values
     tStrain = Data[File]['Transverse Strain (mm/mm)'].values
@@ -219,7 +220,7 @@ for File in Files:
     ax.plot(X, Y, label=r"Poisson's Ratio Fit, $\nu$=" + str(round(nu, 3)))
 
 # Format the plot
-ax.set_xlim(left=0, right=0.01)
+ax.set_xlim(left=0, right=0.008)
 ax.set_ylim(bottom=0, top=0.002)
 plt.title("Axial vs Transverse Strain Magnified")
 plt.xlabel('Axial Strain (mm/mm)')
@@ -229,8 +230,8 @@ plt.legend()
 #FIND WHAT VALUES OF A AND B ARE USED BY OTHER PEOPLE OR FIND THEM YOURSELF
 
 
-a = [10,20,20,10]
-b = [100,200,250,350]
+a = [75,75,300,200]
+b = [150,150,600,250]
 PoissonsRatios = []
 nuR2Values = []
 avgPoissonsRatio = []
@@ -243,7 +244,6 @@ for File in Files:
 
     # Use the two fits
     nu,R,X,Y = PoissonFit(aStrain,tStrain,a[int(inc/3)],b[int(inc/3)])
-
     PoissonsRatios += [nu]
     nuR2Values += [R**2]
     inc = inc+1
@@ -251,5 +251,133 @@ for i in range(4):
     avgPoissonsRatio += [mean(PoissonsRatios[i * 3:(i + 1) * 3])]
     avgnuR2Values += [std(nuR2Values[i * 3:(i + 1) * 3])]
 
-plt.show()
 
+#YIELD STRENGTH CALCULATION
+
+
+
+#YIELD STRENGTH CALCULATION
+def yieldStress(Strain, Stress, E, C, eOffset):
+    '''This function will find the yield stress based on a 0.2% offset strain method.
+    You must input the stress, strain, Youngs modulus E, fit line intercept point b, and
+    can change the strain offset value.'''
+
+    yP = next(i for i, x in enumerate(Strain) if Stress[i] < E * (x - eOffset) + C)
+    # This code finds the first point where the Stress exceeds the strain offset line defined by y=E*(x-eOffset)+b
+    # This is the simplest way to determine a slope intercept, but it only works if the stress and the offset line intersect
+
+    return yP  # this returns the index i of the yield stress, if you want it to return the stress, use: return Stress[yP]
+
+
+fig = plt.figure()
+ax = fig.gca()
+
+#FIND PROPER A AND B VALUES FROM OTHER SECTIONS OR FIND THEM YOURSELF
+fig = plt.figure()
+ax = fig.gca()
+a = 125;
+b = 200  # Note: you will have to play with these values for a given test type
+eOff = 0.002
+for File in Aluminum:
+    strain = Data[File]['Strain (mm/mm)'].values
+    stress = Data[File]['Stress (MPa)'].values
+
+    # Find modulus and yield
+    E, C, R, X, Y = modulusFit(strain, stress, a, b)
+    iYield = yieldStress(strain, stress, E, C, eOffset=eOff)
+    xOffset = [x + eOff for x in X]
+
+    # Plot the data
+    ax.plot(strain, stress)
+    ax.plot(strain[a], stress[a], 'bd')  # This is the first point we're fitting from
+    ax.plot(strain[b], stress[b], 'bs')  # this is the last point we're fitting from
+    ax.plot(strain[a:b], stress[a:b], 'b.')  # These are all the points we're fitting
+    ax.plot(strain[iYield], stress[iYield], 'o', label=r'Yield, $\sigma_y$=' + str(round(stress[iYield], 1)) + ' MPa')
+
+    # Plot the fits
+    ax.plot(X, Y, label='Modulus, E=' + str(round(E1 * 1e-3, 1)) + ' GPa')
+    ax.plot(xOffset, Y, '--')
+
+ax.set_xlim(left=0, right=0.01)
+ax.set_ylim(bottom=0, top=400)
+plt.title("Yield Stress Calculation")
+plt.ylabel('Stress (MPa)')
+plt.xlabel('Strain (mm/mm)')
+plt.legend()
+
+a = [0,100,250,125]
+b = [20,180,700,200]
+yieldStrengths = []
+yR2Values = []
+avgYieldStrengths = []
+avgyR2Values = []
+inc = 0
+eOff = 0.002
+for File in Files:
+    # Save dummy variables to make the code cleaner below
+    strain = Data[File]['Strain (mm/mm)'].values
+    stress = Data[File]['Stress (MPa)'].values
+    # Find modulus and yield
+    if inc != 0:
+        E,C,R,X,Y = modulusFit(strain,stress,a[int(inc/3)],b[int(inc/3)])
+        iYield = yieldStress(strain,stress,E,C,eOffset=eOff)
+        yieldStrengths += [stress[iYield]]
+        yR2Values += [R ** 2]
+    if inc == 0:
+        iYield = len(stress)
+        yieldStrengths += [max(stress)]
+        yR2Values += [0]
+
+    inc = inc+1
+
+for i in range(4):
+    avgYieldStrengths+= [mean(yieldStrengths[i*3:(i+1)*3])]
+    avgyR2Values+= [std(yR2Values[i*3:(i+1)*3])]
+print(avgYieldStrengths)
+
+i=0
+for File in Files:
+    # FIND ULTIMATE STRESS
+    ultimateStress = Data[File]['Stress (MPa)'].max()
+    ultimateStrain = ultimateStress/(youngsModuli[i])  # calculate the ultimate strain here, i.e. the strain at the ultimate stress
+    print("Ultimate Stress =", round(ultimateStress, 1), "MPa for", File)
+    print("Ultimate Strain =", ultimateStrain, "for",File)
+
+    #FIND FRACTURE STRESS
+
+    fractureStress = Data[File]['Stress (MPa)'].values[-3]  # calculate the fracture stress here, i.e. the stress where the sample fractures
+    fractureStrain = [fractureStress/(youngsModuli[i])]  # calculate the fracture strain here,
+    # hint look at the max function for pandas, or use data.values and take the [-1] which is the last value
+    print("Fracture Stress =", round(fractureStress,1), "MPa for",File)
+    print("Fracture Strain =", fractureStrain, "for",File)
+
+    # Input the sample parameters
+    Lo = 25.4  # initial sample length, change for each specimen
+
+    deltaL = Data[File]['Extension (mm)'].max()
+    L = Lo + deltaL
+    percentElongation = (deltaL/Lo) * 100
+    print("Percent Elongation: ",round(percentElongation,2))
+
+    yData = Data[File]['Stress (MPa)']
+    xData = Data[File]['Axial Strain (mm/mm)']
+
+    # Calculate the area
+    tensileToughness = trapz(yData, x=xData)  # if we don't include xData, it will take the spacing to be 1
+
+    # Print the result
+    print('Tensile toughness =', round(tensileToughness, 2), 'MPa')  # We're rounding to the nearest 0.01
+
+    xDataY = Data[File]['Axial Strain (mm/mm)']
+    yDataY = Data[File]['Stress (MPa)']
+    for h in range(len(xDataY)):
+        if h > iYield:
+            del yDataY[h]
+            del xDataY[h]
+
+    modulusofResiliance =trapz(yDataY, x=xData)
+    print("Modulus of Resliance: ", modulusofResiliance, 'MPa')
+    i=i+1
+
+
+plt.show()
