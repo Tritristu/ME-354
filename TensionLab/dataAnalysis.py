@@ -346,7 +346,7 @@ for File in Files:
         yieldStrengths += [stress[iYield]]
         yR2Values += [R ** 2]
     if inc == 0:
-        iYield = len(stress)
+        iYield = np.where(stress == max(stress))
         yieldStrengths += [max(stress)]
         yR2Values += [0]
 
@@ -388,6 +388,10 @@ for File in Files:
     xData = Data[File]['Axial Strain (mm/mm)']
 
     # Calculate the area
+    for j in range(len(xData)):
+        if j > len(xData)-3:
+            del yData[j]
+            del xData[j]
     tensileToughness = trapz(yData, x=xData)  # if we don't include xData, it will take the spacing to be 1
 
     # Print the result
