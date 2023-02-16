@@ -14,40 +14,55 @@ from scipy.stats import linregress  # This is a linear regression function built
 # Material properties
 materialConstants = pd.read_csv('materialConstants.csv')
 # 6061-T6 Aluminum
-elasticModulusAl = materialConstants.at[0,'Elastic Modulus (Pa)']
+elasticModulusAl = materialConstants.at[0,'Elastic Modulus (Pa)']*10**(-6)
 yieldStressAl = materialConstants.at[0,'Yield Stress (Pa)']
 poissonAl = materialConstants.at[0,'Poisson\'s ratio']
 densityAl = materialConstants.at[0,'Density (kg/m^3)']
 
 # 1018 Steel
-elasticModulusFe = materialConstants.at[1,'Elastic Modulus (Pa)']
+elasticModulusFe = materialConstants.at[1,'Elastic Modulus (Pa)']*10**(-6)
 yieldStressFe = materialConstants.at[1,'Yield Stress (Pa)']
 poissonFe = materialConstants.at[1,'Poisson\'s ratio']
 densityFe = materialConstants.at[1,'Density (kg/m^3)']
 
 # Composite Properties
 fiberVol = 0.65 # volume fraction
-elasticModulusComp1 = materialConstants.at[3,'Elastic Modulus (Pa)']*(1-fiberVol) + materialConstants.at[2,'Elastic Modulus (Pa)']*fiberVol
-elasticModulusComp2 = 1/(fiberVol/materialConstants.at[2,'Elastic Modulus (Pa)'] + (1-fiberVol)/materialConstants.at[3,'Elastic Modulus (Pa)'])
+elasticModulusComp2 = materialConstants.at[3,'Elastic Modulus (Pa)']*(1-fiberVol) + materialConstants.at[2,'Elastic Modulus (Pa)']*fiberVol*10**(-6)
+elasticModulusComp1 = 1/(fiberVol/materialConstants.at[2,'Elastic Modulus (Pa)'] + (1-fiberVol)/materialConstants.at[3,'Elastic Modulus (Pa)'])*10**(-6)
 strength1 = fiberVol*materialConstants.at[2,'Yield Stress (Pa)'] + (1-fiberVol)*materialConstants.at[3,'Yield Stress (Pa)']
 strength2 = materialConstants.at[3,'Yield Stress (Pa)'] # this is just the strength of the matrix
 poissonComp12 = fiberVol*materialConstants.at[2,'Poisson\'s ratio'] + (1-fiberVol)*materialConstants.at[3,'Poisson\'s ratio']
 poissonComp21 = (elasticModulusComp2/elasticModulusComp1)*poissonComp12
 
+EVals = [elasticModulusComp1,elasticModulusComp1,elasticModulusComp1,elasticModulusFe,elasticModulusFe,elasticModulusFe,elasticModulusComp2,elasticModulusComp2,elasticModulusComp2,elasticModulusAl,elasticModulusAl,elasticModulusAl]
+print(EVals)
 # Exmperimental Data
 
 Files = [x for x in listdir('experimentalData') if '.csv' in x]
 Steel = [x for x in listdir('experimentalData') if '1018' in x]
+Steel1 = [x for x in listdir('experimentalData') if '1018 Steel Sample 1' in x]
+Steel2 = [x for x in listdir('experimentalData') if '1018 Steel Sample 2' in x]
+Steel3 = [x for x in listdir('experimentalData') if '1018 Steel Sample 3' in x]
 Aluminum = [x for x in listdir('experimentalData') if '6061' in x]
+Aluminum1 = [x for x in listdir('experimentalData') if '6061 Aluminum Sample 1' in x]
+Aluminum2 = [x for x in listdir('experimentalData') if '6061 Aluminum Sample 2' in x]
+Aluminum3 = [x for x in listdir('experimentalData') if '6061 Aluminum Sample 3' in x]
 CFRP0 = [x for x in listdir('experimentalData') if 'CFRP 0' in x]
+CFRP01 = [x for x in listdir('experimentalData') if 'CFRP 0 Degree Sample 1' in x]
+CFRP02 = [x for x in listdir('experimentalData') if 'CFRP 0 Degree Sample 2' in x]
+CFRP03 = [x for x in listdir('experimentalData') if 'CFRP 0 Degree Sample 3' in x]
 CFRP90 = [x for x in listdir('experimentalData') if 'CFRP 90' in x]
+CFRP901 = [x for x in listdir('experimentalData') if 'CFRP 90 Degree Sample 1' in x]
+CFRP902 = [x for x in listdir('experimentalData') if 'CFRP 90 Degree Sample 2' in x]
+CFRP903 = [x for x in listdir('experimentalData') if 'CFRP 90 Degree Sample 3' in x]
+
 # Dimensioning
 # Test Data
 Data = {x:{} for x in Files}
-
 for File in Files:
     Data[File] = pd.read_csv('experimentalData/' + File)
 i=0
+
 for File in Files:
     emptyList = [[]]*len(Data[File].index) #This is an empty list with the same length as the data file
     #Note, when you multiply Python lists it just copies the list, e.g. [[1]]*3=[[1],[1],[1]]
@@ -56,19 +71,21 @@ for File in Files:
     Data[File]['Strain (mm/mm)'] = Data[File]['Axial Strain (mm/mm)']  # this adds another strain column to the data
     Data[File]['Stress (MPa)'] = Data[File]['Load (N)']/Area #this adds stress to the data
     #You'll need to do calculations here
-    Data[File]['Instantaneous Area (mm^2)'] = (1-Data[File]['Transverse Strain (mm/mm)'])**2 * Area #Calculate the instantaneous area using the original dimensions and the transverse strain
+    Data[File]['Instantaneous Area (mm^2)'] = (1+Data[File]['Transverse Strain (mm/mm)'])**2 * Area #Calculate the instantaneous area using the original dimensions and the transverse strain
     Data[File]['True Stress (MPa)'] = Data[File]['Load (N)']/Data[File]['Instantaneous Area (mm^2)'] #Add in the true stress here
-    #Data[File]['True Strain (mm/mm)'] = Data[File]['True Stress (MPa)']/ #Add in the true strain here
+    Data[File]['True Strain (mm/mm)'] = Data[File]['True Stress (MPa)']/EVals[i]
+
     i=i+1
 
 #Stress Vs Strain Graph
 fig = plt.figure()
 ax = fig.gca()
-for File in Files:
-    ax.plot(Data[File]['Strain (mm/mm)'],Data[File]['Stress (MPa)'],label=File) #the label corresponds to what the legend will output
+for File in CFRP902:
+    ax.plot(Data[File]['Strain (mm/mm)'],Data[File]['Stress (MPa)'],label=File+' Engineering Stress Strain') #the label corresponds to what the legend will output
+    ax.plot(Data[File]['Strain (mm/mm)'], Data[File]['True Stress (MPa)'],label=File+' True Stress Strain')  # the label corresponds to what the legend will output
 ax.set_xlim(left = 0)
 ax.set_ylim(bottom = 0)
-plt.title("Engineering Stress vs Strain")
+plt.title("Engineering & True Stress vs Strain")
 plt.ylabel('Stress (MPa)')
 plt.xlabel('Strain (mm/mm)')
 plt.legend() #this turns the legend on, you can manually change entries using legend(['Sample 1', 'Sample 2',...])
@@ -84,7 +101,6 @@ for File in Files:
 
 #Plot the zoomed box
 ax1.plot([0,0,eZoom,eZoom,0],[0,sZoom,sZoom,0,0],'r--')
-
 #Add Labels
 ax1.set_xlim(left=0)
 ax1.set_ylim(bottom=0)
@@ -122,18 +138,19 @@ fig = plt.figure(3)
 ax = fig.gca()
 
 # We'll test out two fit points and see the difference
-a1 = 125
-b1 = 200
-a2 = 20
-b2 = 150
-for File in CFRP90:
+a1 = 50
+b1 = 300
+# a2 = 20
+# b2 = 150
+inc = 0
+for File in CFRP901:
     # Save dummy variables to make the code cleaner below
     strain = Data[File]['Strain (mm/mm)'].values
     stress = Data[File]['Stress (MPa)'].values
 
     # Use the two fits
-    E1, C1, R1, X1, Y1 = modulusFit(strain, stress, a1, b1)
-    E2, C2, R2, X2, Y2 = modulusFit(strain, stress, a2, b2)
+    E1, C1, R1, X1, Y1 = modulusFit(strain, stress, a1,b1)
+    #E2, C2, R2, X2, Y2 = modulusFit(strain, stress, a2, b2)
 
     # Plot the data
     ax.plot(strain, stress)
@@ -144,8 +161,9 @@ for File in CFRP90:
     #ax.plot(strain[b2], stress[b2], 'bs')
     #     ax.plot(strain[a2:b2],stress[a2:b2],'b.') #this will show all the data we're fitting
     # Plot the fits
-    plt.plot(X1, Y1, label='Fit1, E=' + str(round(E1 * 1e-3, 1)) + ' GPa' + File)
+    plt.plot(X1, Y1, label='Fit1, E=' + str(round(E1 * 1e-3, 1)) + ' GPa ' + File)
     #ax.plot(X2, Y2, label='Fit2, E=' + str(round(E2 * 1e-3, 1)) + ' GPa')
+    ax.set_xlim(left=0, right=0.02)
 
 
 #ax.set_xlim(left = 0, right=0.006)
@@ -154,11 +172,11 @@ plt.title("Modulus Fit")
 plt.ylabel('Stress (MPa)')
 plt.xlabel('Strain (mm/mm)')
 plt.legend()
-
+plt.plot(0)
 
 #FIND WHAT VALUES OF A AND B ARE USED BY OTHER PEOPLE OR FIND THEM YOURSELF
-a = [125,100,250,125]
-b = [200,180,700,200]
+a = [50,100,250,125]
+b = [300,180,700,200]
 youngsModuli = []
 avgYoungsModuli = []
 stdYoungsModuli = []
@@ -181,6 +199,11 @@ for i in range(4):
     avgYoungsModuli+= [mean(youngsModuli[i*3:(i+1)*3])/1000]
     stdYoungsModuli+= [np.std(youngsModuli[i*3:(i+1)*3])/1000]
 
+print('CFRP90 Youngs Moduli:',avgYoungsModuli[0], 'std', stdYoungsModuli[0])
+print('1018 Steel Youngs Moduli:',avgYoungsModuli[1],'std', stdYoungsModuli[1])
+print('CFRP0 Youngs Moduli:',avgYoungsModuli[2],'std', stdYoungsModuli[2])
+print('6061 Aluminum Youngs Moduli:',avgYoungsModuli[3],'std', stdYoungsModuli[3])
+
 #finding poisons ratio
 
 def PoissonFit(axialStrain, transverseStrain, a, b):
@@ -200,9 +223,9 @@ def PoissonFit(axialStrain, transverseStrain, a, b):
 
 fig = plt.figure(5)
 ax = fig.gca()
-a = 225
-b = 275  # Note: you will have to play with these values for a given test type
-for File in Aluminum:
+a = 75
+b = 150  # Note: you will have to play with these values for a given test type
+for File in CFRP901:
     # Create dummy variables to make plotting easier
     aStrain = Data[File]['Axial Strain (mm/mm)'].values
     tStrain = Data[File]['Transverse Strain (mm/mm)'].values
@@ -217,16 +240,15 @@ for File in Aluminum:
     ax.plot(aStrain[a:b], tStrain[a:b], 'b.')  # These are all the points we're fitting
 
     # Plot the fits
-    ax.plot(X, Y, label=r"Poisson's Ratio Fit, $\nu$=" + str(round(nu, 3)))
+    ax.plot(X, Y, label=r"Poisson's Ratio Fit, $\nu$=" + str(round(nu, 3))+File)
 
 # Format the plot
 ax.set_xlim(left=0, right=0.008)
-ax.set_ylim(bottom=0, top=0.002)
+ax.set_ylim(bottom=0, top=0.0003)
 plt.title("Axial vs Transverse Strain Magnified")
 plt.xlabel('Axial Strain (mm/mm)')
 plt.ylabel('Transverse Strain (mm/mm)')
 plt.legend()
-
 #FIND WHAT VALUES OF A AND B ARE USED BY OTHER PEOPLE OR FIND THEM YOURSELF
 
 
@@ -235,7 +257,7 @@ b = [150,150,600,250]
 PoissonsRatios = []
 nuR2Values = []
 avgPoissonsRatio = []
-avgnuR2Values = []
+stdPoissonsRatio = []
 inc = 0
 for File in Files:
     # Save dummy variables to make the code cleaner below
@@ -249,8 +271,11 @@ for File in Files:
     inc = inc+1
 for i in range(4):
     avgPoissonsRatio += [mean(PoissonsRatios[i * 3:(i + 1) * 3])]
-    avgnuR2Values += [std(nuR2Values[i * 3:(i + 1) * 3])]
-
+    stdPoissonsRatio += [std(PoissonsRatios[i * 3:(i + 1) * 3])]
+print('CFRP90 Poissons:',avgPoissonsRatio[0], 'std', stdPoissonsRatio[0])
+print('1018 Steel Poissons:',avgPoissonsRatio[1],'std', stdPoissonsRatio[1])
+print('CFRP0 Poissons:',avgPoissonsRatio[2],'std', stdPoissonsRatio[2])
+print('6061 Aluminum Poissons:',avgPoissonsRatio[3],'std', stdPoissonsRatio[3])
 
 #YIELD STRENGTH CALCULATION
 
@@ -268,9 +293,6 @@ def yieldStress(Strain, Stress, E, C, eOffset):
 
     return yP  # this returns the index i of the yield stress, if you want it to return the stress, use: return Stress[yP]
 
-
-fig = plt.figure()
-ax = fig.gca()
 
 #FIND PROPER A AND B VALUES FROM OTHER SECTIONS OR FIND THEM YOURSELF
 fig = plt.figure()
@@ -305,12 +327,12 @@ plt.ylabel('Stress (MPa)')
 plt.xlabel('Strain (mm/mm)')
 plt.legend()
 
-a = [0,100,250,125]
-b = [20,180,700,200]
+a = [50,100,250,125]
+b = [300,180,700,200]
 yieldStrengths = []
 yR2Values = []
 avgYieldStrengths = []
-avgyR2Values = []
+stdYieldStrengths = []
 inc = 0
 eOff = 0.002
 for File in Files:
@@ -332,8 +354,11 @@ for File in Files:
 
 for i in range(4):
     avgYieldStrengths+= [mean(yieldStrengths[i*3:(i+1)*3])]
-    avgyR2Values+= [std(yR2Values[i*3:(i+1)*3])]
-print(avgYieldStrengths)
+    stdYieldStrengths+= [std(yieldStrengths[i*3:(i+1)*3])]
+print('CFRP90 Yield:',avgYieldStrengths[0], 'NA')
+print('1018 Steel Yield:',avgYieldStrengths[1],'std', stdYieldStrengths[1])
+print('CFRP0 Yield:',avgYieldStrengths[2],'NA')
+print('6061 Aluminum Yield:',avgYieldStrengths[3],'std', stdYieldStrengths[3])
 
 i=0
 for File in Files:
@@ -379,5 +404,3 @@ for File in Files:
     print("Modulus of Resliance: ", modulusofResiliance, 'MPa')
     i=i+1
 
-
-plt.show()
