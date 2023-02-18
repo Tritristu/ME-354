@@ -1,0 +1,33 @@
+import pandas as pd
+import numpy as np
+from os import listdir
+from scipy.stats import linregress
+
+# Experimental Data
+Files = [x for x in listdir() if '.csv' in x]
+Steel = [x for x in listdir() if '1018' in x]
+Aluminum = [x for x in listdir() if '6061' in x]
+
+Data = {x:{} for x in Files}
+for File in Files:
+    Data[File] = pd.read_csv(File)
+
+
+
+
+def modulusFit(Strain, Stress, a, b):
+    # Fit the modulus
+    E, C, R, P, Err = linregress(Strain[a:b], Stress[a:b])  # The data outputs the slope (E), intercept (C), regression (R) value, P-value and standard error
+
+    # Make a line for the fit data
+    Y = [0.0, max(Stress)]  # this is a list of length 2 for plotting the fit data later
+    X = [(y - C) / E for y in Y]  # these are points that you can plot to visualize the data being fit, inverted from y=E*x+C, x=(y-C)/E
+    return E, C, R, X, Y
+
+
+
+
+
+
+
+
