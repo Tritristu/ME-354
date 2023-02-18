@@ -7,25 +7,24 @@ from scipy.stats import linregress
 # Constants
 g = 9.81
 
-steelElasticMod = 192.73856228694635e9
+steelElasticMod = 192.73856228694635e9 # maybe pull from a csv?
 steelPoisson = 0.35225704496405114
 steelYield = 540.981570199884e6
 steelShearMod = steelElasticMod/(2+2*steelPoisson)
-steelHardConst = 1 # add real numbers
-steelHardCoeff = 1
+steelHardExp = 0.0875  # add extra credit numbers
+steelHardCoeff = 828e6
 
-aluminumElasticMod = 73.25376489150618e9
+aluminumElasticMod = 73.25376489150618e9  # maybe pull from a csv?
 aluminumPoisson = 0.2769261455092313
 aluminumYield = 298.6339832889318e6
 aluminumShearMod = aluminumElasticMod/(2+2*aluminumPoisson)
-aluminumHardConst = 1 # add real numbers
-aluminumlHardCoeff = 1
+aluminumHardExp = 0.0628 # add extra credit numbers
+aluminumlHardCoeff = 422e6
 
 # Dimensional Data
 length = 180e-3 # rod length from grip to grip [m]
 rodDia = 4.76e-3 # [m]
 gripeDia = 52.3e-3 # [m]
-
 
 # Loading Data
 Files = [x for x in listdir('TorsionLab') if '.csv' in x]
@@ -64,9 +63,15 @@ plt.ylabel('Torque (N.m)')
 plt.xlabel('Twist Angle (deg)')
 plt.legend()
 
-
 # Shear modulus calculation?
 # Ask cherwyn about wether we need to fit our shear modulus or if we can just relate our previously calculated elastic modulus to it
+def shearFit(torque, angle, a, b):
+    nu, C, R, P, Err = linregress(torque[a:b], angle[a:b])  # The data outputs the slope (nu), intercept (C), regression (R) value, P-value and standard error
+
+    # Make a line for the fit data
+    Y = [0.0, torque[round(1.5 * b)]]
+    X = [(y - C) / nu for y in Y]  # these are points that you can plot to visualize the data being fit, inverted from y=nu*x+C, x=(y-C)/nu
+    return nu, R, X, Y
 
 
 # Calculate yield radius with respect to angle
@@ -83,6 +88,8 @@ for File in Aluminum:
     ax.plot(Data[File]['Angle (deg) '],Data[File]['Yield Radii (m)'],label=File[:len(File)-4]+' Yield radii') #the label corresponds to what the legend will output
 ax.set_xlim(left = 0)
 ax.set_ylim(bottom = 0)
+# ax.set_xlim(left=0, right=0.01)
+ax.set_ylim(bottom=0, top=rodDia)
 plt.title("Aluminum Yield Radii vs Twist Angle")
 plt.ylabel('Yield Radii (m)')
 plt.xlabel('Twist Angle (deg)')
@@ -94,6 +101,8 @@ for File in Steel:
     ax.plot(Data[File]['Angle (deg) '],Data[File]['Yield Radii (m)'],label=File[:len(File)-4]+' Yield radii') #the label corresponds to what the legend will output
 ax.set_xlim(left = 0)
 ax.set_ylim(bottom = 0)
+# ax.set_xlim(left=0, right=0.01)
+ax.set_ylim(bottom=0, top=rodDia)
 plt.title("Steel Yield Radii vs Twist Angle")
 plt.ylabel('Yield Radii (m)')
 plt.xlabel('Twist Angle (deg)')
