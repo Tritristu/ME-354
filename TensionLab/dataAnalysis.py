@@ -1,15 +1,10 @@
 import numpy as np
 import pandas as pd
-import scipy as sp
 import matplotlib.pyplot as plt
 from os import listdir
 from numpy import mean,std
 from numpy import trapz
-
-
 from scipy.stats import linregress  # This is a linear regression function built into the Scipy library.
-
-# You can call help(linregress) if you'd like to learn more. Or check out https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.linregress.html
 
 # Material properties
 materialConstants = pd.read_csv('materialConstants.csv')
@@ -88,7 +83,7 @@ ax.set_ylim(bottom = 0)
 plt.title("Engineering & True Stress vs Strain")
 plt.ylabel('Stress (MPa)')
 plt.xlabel('Strain (mm/mm)')
-plt.legend() #this turns the legend on, you can manually change entries using legend(['Sample 1', 'Sample 2',...])
+plt.legend()
 
 
 #Youngs Modulus Calculation
@@ -115,13 +110,7 @@ ax2.set_xlabel('Strain (mm/mm)')
 ax1.legend()
 ax2.legend()
 
-
-
-
 def modulusFit(Strain, Stress, a, b):
-    '''This is a linear fit to data between the data indices for a and b. Note, this will
-    return an error if a or b are outside the length of Strain and Stress.'''
-
     # Fit the modulus
     E, C, R, P, Err = linregress(Strain[a:b], Stress[
                                               a:b])  # The data outputs the slope (E), intercept (C), regression (R) value, P-value and standard error
@@ -165,7 +154,6 @@ for File in CFRP901:
     #ax.plot(X2, Y2, label='Fit2, E=' + str(round(E2 * 1e-3, 1)) + ' GPa')
     ax.set_xlim(left=0, right=0.02)
 
-
 #ax.set_xlim(left = 0, right=0.006)
 #ax.set_ylim(bottom = 0, top=800)
 plt.title("Modulus Fit")
@@ -184,9 +172,7 @@ ER2Values = []
 inc = 0
 inc2 = 0
 for File in Files:
-
     # Save dummy variables to make the code cleaner below
-
     strain = Data[File]['Strain (mm/mm)'].values
     stress = Data[File]['Stress (MPa)'].values
 
@@ -276,10 +262,6 @@ print('CFRP90 Poissons:',avgPoissonsRatio[0], 'std', stdPoissonsRatio[0])
 print('1018 Steel Poissons:',avgPoissonsRatio[1],'std', stdPoissonsRatio[1])
 print('CFRP0 Poissons:',avgPoissonsRatio[2],'std', stdPoissonsRatio[2])
 print('6061 Aluminum Poissons:',avgPoissonsRatio[3],'std', stdPoissonsRatio[3])
-
-#YIELD STRENGTH CALCULATION
-
-
 
 #YIELD STRENGTH CALCULATION
 def yieldStress(Strain, Stress, E, C, eOffset):

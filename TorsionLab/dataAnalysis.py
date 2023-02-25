@@ -100,10 +100,9 @@ fig = plt.figure(3)
 ax = fig.gca()
 for File in Aluminum:
     ax.plot(Data[File]['Angle (deg) '],Data[File]['Yield Radii (m)'],label=File[:len(File)-4]+' Yield radii') #the label corresponds to what the legend will output
-ax.set_xlim(left = 0)
-ax.set_ylim(bottom = 0)
-# ax.set_xlim(left=0, right=0.01)
-ax.set_ylim(bottom=0, top=rodDia)
+ax.plot(np.linspace(0,180),(rodDia/2)*np.ones(50),label = 'Specimen Radii')
+ax.set_xlim(left=0, right=135)
+ax.set_ylim(bottom=0, top=4e-3)
 plt.title("Aluminum Yield Radii vs Twist Angle")
 plt.ylabel('Yield Radii (m)')
 plt.xlabel('Twist Angle (deg)')
@@ -113,19 +112,16 @@ fig = plt.figure(4)
 ax = fig.gca()
 for File in Steel:
     ax.plot(Data[File]['Angle (deg) '],Data[File]['Yield Radii (m)'],label=File[:len(File)-4]+' Yield radii') #the label corresponds to what the legend will output
-ax.set_xlim(left = 0)
-ax.set_ylim(bottom = 0)
-# ax.set_xlim(left=0, right=0.01)
-ax.set_ylim(bottom=0, top=rodDia)
+ax.plot(np.linspace(0,180),(rodDia/2)*np.ones(50),label = 'Specimen Radii')
+ax.set_xlim(left=0, right=135)
+ax.set_ylim(bottom=0, top=4e-3)
 plt.title("Steel Yield Radii vs Twist Angle")
 plt.ylabel('Yield Radii (m)')
 plt.xlabel('Twist Angle (deg)')
 plt.legend()
 
 # Calculating the theoretical angle-torque plot
-def theoreticalPlot(endpoint,yieldStrength,elasticMod,poissons,hardenCoeff,hardenExp):
-    length = 180e-3
-    rodDia = 4.76e-3
+def theoreticalPlot(endpoint,length,rodDia,yieldStrength,elasticMod,poissons,hardenCoeff,hardenExp):
     shearMod = elasticMod/(2 + 2*poissons)
     thetaTrans = 2*yieldStrength*length/(shearMod*rodDia*np.sqrt(3)) # rad
     elasticRegion = np.linspace(0,thetaTrans,num=200)
@@ -137,8 +133,8 @@ def theoreticalPlot(endpoint,yieldStrength,elasticMod,poissons,hardenCoeff,harde
     torque = np.concatenate([elasticTorque,plasticTorque])
     return angles,torque
 
-anglesSteelTh, torqueSteelTh = theoreticalPlot(8500*(np.pi/180),steelYield,steelElasticMod,steelPoisson,steelHardCoeffNom,steelHardExpNom)
-anglesAluminumTh, torqueAluminumTh = theoreticalPlot(15500*(np.pi/180),aluminumYield,aluminumElasticMod,aluminumPoisson,aluminumHardCoeffNom,aluminumHardExpNom)
+anglesSteelTh, torqueSteelTh = theoreticalPlot(8500*(np.pi/180),length,rodDia,steelYield,steelElasticMod,steelPoisson,steelHardCoeffNom,steelHardExpNom)
+anglesAluminumTh, torqueAluminumTh = theoreticalPlot(15500*(np.pi/180),length,rodDia,aluminumYield,aluminumElasticMod,aluminumPoisson,aluminumHardCoeffNom,aluminumHardExpNom)
 
 fig = plt.figure(5)
 ax = fig.gca()
