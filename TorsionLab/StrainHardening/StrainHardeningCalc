@@ -23,28 +23,30 @@ Data = {x:{} for x in Files}
 for File in Files:
     Data[File] = pd.read_csv('TorsionLab\StrainHardening\\'+File)
 
-#  Minor Calculations
+#  Calculations
 for File in Files:
+    Data[File]['True Strain'] = np.log(1+Data[File]['Axial Strain (mm/mm)'])
     area = Data[File]['Thickness(m)'][0]*Data[File]['Width(m)'][0]
-    Data[File]['Stress (Pa)'] = Data[File]['Load (N)']/area
+    Data[File]['Instantaneous Area (m)'] = area*(1- Data[File]['Transverse Strain (mm/mm)'])**2
+    Data[File]['True Stress (Pa)'] = Data[File]['Load (N)']/Data[File]['Instantaneous Area (m)']
 
 #  Plotting logarithmic graphs
 fig = plt.figure(1)
 ax = fig.gca()
 for File in Aluminum:
-    ax.loglog(Data[File]['Axial Strain (mm/mm)'],Data[File]['Stress (Pa)'],label=File[:len(File)-4]+' Logarithmic Plot') #the label corresponds to what the legend will output
+    ax.loglog(Data[File]['True Strain'],Data[File]['True Stress (Pa)'],label=File[:len(File)-4]+' Logarithmic Plot') #the label corresponds to what the legend will output
 plt.title("Aluminum logarithmic Stress vs Strain")
-plt.ylabel('Stress [log(Pa)]')
-plt.xlabel('Strain [log(mm/mm)]')
+plt.ylabel('True Stress [log(Pa)]')
+plt.xlabel('True Strain [log(mm/mm)]')
 plt.legend()
 
 fig = plt.figure(2)
 ax = fig.gca()
 for File in Steel:
-    ax.loglog(Data[File]['Axial Strain (mm/mm)'],Data[File]['Stress (Pa)'],label=File[:len(File)-4]+' Logarithmic Plot') #the label corresponds to what the legend will output
+    ax.loglog(Data[File]['True Strain'],Data[File]['True Stress (Pa)'],label=File[:len(File)-4]+' Logarithmic Plot') #the label corresponds to what the legend will output
 plt.title("Steel logarithmic Stress vs Strain")
-plt.ylabel('Stress [log(Pa)]')
-plt.xlabel('Strain [log(mm/mm)]')
+plt.ylabel('True Stress [log(Pa)]')
+plt.xlabel('True Strain [log(mm/mm)]')
 plt.legend()
 
 
@@ -52,17 +54,17 @@ plt.legend()
 def hardeningFit(Strain, Stress, a, b, strainOffset):
     elasticMod, intercept, R, P, Err = linregress(Strain[a:b], Stress[a:b])
     yP = next(i for i, x in enumerate(Strain) if Stress[i] < elasticMod * (x - strainOffset) + intercept)
-    logStrain = np.log10(Strain)
-    logStress = np.log10(Stress)
-    hardExp, hardInt, R, P, Err = linregress(logStrain[yP:len(Strain)-10], logStress[yP:len(Stress)-10])
+    logStrain = np.log10(Strain[20:len(Strain)])
+    logStress = np.log10(Stress[20:len(Stress)])
+    hardExp, hardInt, R, P, Err = linregress(logStrain[yP-20:len(Strain)-5], logStress[yP-20:len(Stress)-5])
     hardCoeff = np.exp(hardInt + hardExp)
     return hardCoeff,hardExp
 
 hardeningConstants = {x:{} for x in Files}
 for File in Files:
-    hardeningCoeff,hardeningExp = hardeningFit(Data[File]['Axial Strain (mm/mm)'],Data[File]['Stress (Pa)'],10,200,0.002) 
-    print(File + ':',hardeningCoeff,hardeningExp)
+    hardeningCoeff,hardeningExp = hardeningFit(Data[File]['True Strain'],Data[File]['True Stress (Pa)'],10,200,0.002) 
+    print(File + ':','H',hardeningCoeff,'n',hardeningExp)
     hardeningConstants[File] = [hardeningCoeff,hardeningExp]
 
-plt.show()
+# plt.show()
 # hardeningConstants.to_csv(r'TorsionLab\StrainHardening\\coefficients.csv', index=False)
