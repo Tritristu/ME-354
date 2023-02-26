@@ -27,7 +27,7 @@ aluminumHardCoeffNom = 422e6
 length = 180e-3 # rod length from grip to grip [m]
 rodDia = 4.76e-3 # [m]
 gripeDia = 52.3e-3 # [m]
-momentOfInertia = np.pi*(rodDia**4)/64
+momentOfInertia = np.pi*(rodDia**4)/32
 
 # Loading Data
 Files = [x for x in listdir('TorsionLab') if '.csv' in x]
