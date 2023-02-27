@@ -68,25 +68,30 @@ plt.legend()
 
 # Shear Modulus Calculation
 shearModuli = {}
+shearIntercepts = {}
 def shearFit(strain, stress, a, b):
     modulus, intercept, R, P, Err = linregress(strain[a:b], stress[a:b]) 
 
-    return modulus
+    return R,intercept,modulus
 
+print('Specimen Shear Values:')
 for File in Files:
-    shearStress = Data[File]['Torque (N.m)']*rodDia/(2*momentOfInertia)
-    shearStrain = Data[File]['Angle (rad)']*rodDia/(2*length)
-    shearModuli[File] = shearFit(shearStrain,shearStress,0,20)
+    Data[File]['Shear Stress (Pa)'] = Data[File]['Torque (N.m)']*rodDia/(2*momentOfInertia)
+    Data[File]['Shear Strain'] = Data[File]['Angle (rad)']*rodDia/(2*length)
+    Rval,shearIntercepts[File],shearModuli[File] = shearFit(Data[File]['Shear Strain'],Data[File]['Shear Stress (Pa)'],0,20)
+    print(File,': ','Shear Modulus (Pa)',shearModuli[File],'R value',Rval)
 
+steelShearMods = []
+aluminumShearMods = []
 avgSteelShearMod = 0
 avgAluminumShearMod = 0
 for File in Files:
     if '1018' in File:
-        avgSteelShearMod += shearModuli[File]
+        steelShearMods.append(shearModuli[File])
     else:
-        avgAluminumShearMod += shearModuli[File]
-avgSteelShearMod = avgSteelShearMod/3
-avgAluminumShearMod = avgAluminumShearMod/3
+        aluminumShearMods.append(shearModuli[File])
+print('Steel Avg Shear [Pa]:',np.mean(steelShearMods),'std',np.std(steelShearMods))
+print('Aluminum Avg Shear [Pa]:',np.mean(aluminumShearMods),'std',np.std(aluminumShearMods))
 
 # Calculate yield radius with respect to angle
 for File in Files:
@@ -94,6 +99,26 @@ for File in Files:
         Data[File]['Yield Radii (m)'] = length*(steelYield/2)/(shearModuli[File]*Data[File]['Angle (rad)'])
     else:
         Data[File]['Yield Radii (m)'] = length*(aluminumYield/2)/(shearModuli[File]*Data[File]['Angle (rad)'])
+
+# Calculate Critical Yield radius and angle
+steelYieldRads = []
+aluminumYieldRads = []
+steelYieldAngles = []
+aluminumYieldAngles = []
+for File in Files:
+    yP = next(i for i, x in enumerate(Data[File]['Shear Strain']) if Data[File]['Shear Stress (Pa)'][i] < shearModuli[File] * (x - 0.002) + shearIntercepts[File])
+    if '1018' in File:
+        steelYieldRads.append(Data[File]['Yield Radii (m)'][yP])
+        steelYieldAngles.append(Data[File]['Angle (deg) '][yP])
+    else:
+        aluminumYieldRads.append(Data[File]['Yield Radii (m)'][yP])
+        aluminumYieldAngles.append(Data[File]['Angle (deg) '][yP])
+# print(steelYieldRads)
+# print(steelYieldAngles)
+# print('Steel Avg Yield Radius [m]:',np.mean(steelYieldRads),'std',np.std(steelYieldRads))
+# print('Aluminum Avg Yield Radius [m]:',np.mean(aluminumYieldRads),'std',np.std(aluminumYieldRads))
+# print('Steel Avg Yield Angle [deg]:',np.mean(steelYieldAngles),'std',np.std(steelYieldAngles))
+# print('Aluminum Avg Yield Angle [deg]:',np.mean(aluminumYieldAngles),'std',np.std(aluminumYieldAngles))
 
 # Plot yield radius vs twist angle
 fig = plt.figure(3)
@@ -131,10 +156,11 @@ def theoreticalPlot(endpoint,length,rodDia,yieldStrength,elasticMod,poissons,har
     plasticTorque = (np.pi*yieldStrength*rodYield**3)/(2*np.sqrt(3)) + ((2*np.pi*hardenCoeff)/((hardenExp+3)*np.sqrt(3)))*((plasticRegion/(length*np.sqrt(3)))**hardenExp)*((rodDia/2)**(hardenExp+3) - rodYield**(hardenExp+3))
     angles = np.concatenate([elasticRegion,plasticRegion])*(180/np.pi) # put back into degrees
     torque = np.concatenate([elasticTorque,plasticTorque])
-    return angles,torque
+    elasticContribution = np.concatenate([np.ones(len(elasticRegion)),((np.pi*yieldStrength*rodYield**3)/(2*np.sqrt(3)))/plasticTorque])
+    return elasticContribution,angles,torque
 
-anglesSteelTh, torqueSteelTh = theoreticalPlot(8500*(np.pi/180),length,rodDia,steelYield,steelElasticMod,steelPoisson,steelHardCoeffNom,steelHardExpNom)
-anglesAluminumTh, torqueAluminumTh = theoreticalPlot(15500*(np.pi/180),length,rodDia,aluminumYield,aluminumElasticMod,aluminumPoisson,aluminumHardCoeffNom,aluminumHardExpNom)
+steelElasticContrTh,anglesSteelTh, torqueSteelTh = theoreticalPlot(8500*(np.pi/180),length,rodDia,steelYield,steelElasticMod,steelPoisson,steelHardCoeffNom,steelHardExpNom)
+aluminumElasticContrTh,anglesAluminumTh, torqueAluminumTh = theoreticalPlot(15500*(np.pi/180),length,rodDia,aluminumYield,aluminumElasticMod,aluminumPoisson,aluminumHardCoeffNom,aluminumHardExpNom)
 
 fig = plt.figure(5)
 ax = fig.gca()
@@ -157,6 +183,17 @@ ax.set_xlim(left = 0)
 ax.set_ylim(bottom = 0, top = 15)
 plt.title("Steel Torque vs Twist Angle")
 plt.ylabel('Torque (N.m)')
+plt.xlabel('Twist Angle (deg)')
+plt.legend()
+
+fig = plt.figure(7)
+ax = fig.gca()
+ax.plot(anglesAluminumTh,aluminumElasticContrTh,label='Elastic Contribution')
+ax.plot(anglesAluminumTh,np.ones(len(anglesAluminumTh))-aluminumElasticContrTh,label='Plastic Contribution')
+ax.set_xlim(left = 0, right=2000)
+ax.set_ylim(bottom = 0)
+plt.title("Theoretical Aluminum Torque Contribution")
+plt.ylabel('Contribution (%)')
 plt.xlabel('Twist Angle (deg)')
 plt.legend()
 
