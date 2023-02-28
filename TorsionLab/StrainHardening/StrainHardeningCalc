@@ -57,14 +57,23 @@ def hardeningFit(Strain, Stress, a, b, strainOffset):
     logStrain = np.log10(Strain[20:len(Strain)])
     logStress = np.log10(Stress[20:len(Stress)])
     hardExp, hardInt, R, P, Err = linregress(logStrain[yP-20:len(Strain)-5], logStress[yP-20:len(Stress)-5])
-    hardCoeff = np.exp(hardInt + hardExp)
+    hardCoeff = 10**hardInt
     return hardCoeff,hardExp
 
-hardeningConstants = {x:{} for x in Files}
+steelHardeningCoeff = []
+aluminumHardeningCoeff = []
+steelHardeningExp = []
+aluminumHardeningExp = []
 for File in Files:
     hardeningCoeff,hardeningExp = hardeningFit(Data[File]['True Strain'],Data[File]['True Stress (Pa)'],10,200,0.002) 
     print(File + ':','H',hardeningCoeff,'n',hardeningExp)
-    hardeningConstants[File] = [hardeningCoeff,hardeningExp]
-
-# plt.show()
+    if '1018' in File:
+        steelHardeningCoeff.append(hardeningCoeff)
+        steelHardeningExp.append(hardeningExp)
+    else:
+        aluminumHardeningCoeff.append(hardeningCoeff)
+        aluminumHardeningExp.append(hardeningExp)
+print('Steel Constants:','H',np.mean(steelHardeningCoeff),'std',np.std(steelHardeningCoeff),'n',np.mean(steelHardeningExp),'std',np.std(steelHardeningExp))
+print('Aluminum Constants:','H',np.mean(aluminumHardeningCoeff),'std',np.std(aluminumHardeningCoeff),'n',np.mean(aluminumHardeningExp),'std',np.std(aluminumHardeningExp))
+plt.show()
 # hardeningConstants.to_csv(r'TorsionLab\StrainHardening\\coefficients.csv', index=False)
