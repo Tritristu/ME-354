@@ -30,12 +30,12 @@ gripeDia = 52.3e-3 # [m]
 momentOfInertia = np.pi*(rodDia**4)/64
 
 # Loading Data
-Files = [x for x in listdir('TorsionLab') if '.csv' in x]
-Steel = [x for x in listdir('TorsionLab') if '1018' in x]
-Aluminum = [x for x in listdir('TorsionLab') if '6061' in x]
+Files = [x for x in listdir(".") if '.csv' in x]
+Steel = [x for x in listdir('.') if '1018' in x]
+Aluminum = [x for x in listdir('.') if '6061' in x]
 Data = {x:{} for x in Files}
 for File in Files:
-    Data[File] = pd.read_csv('TorsionLab/' + File)
+    Data[File] = pd.read_csv(File)
 
 # Minor Calculations
 for File in Files:
@@ -73,13 +73,13 @@ def shearFit(strain, stress, a, b):
     modulus, intercept, R, P, Err = linregress(strain[a:b], stress[a:b]) 
 
     return R,intercept,modulus
-
-print('Specimen Shear Values:')
+#
+# print('Specimen Shear Values:')
 for File in Files:
     Data[File]['Shear Stress (Pa)'] = Data[File]['Torque (N.m)']*rodDia/(2*momentOfInertia)
     Data[File]['Shear Strain'] = Data[File]['Angle (rad)']*rodDia/(2*length)
     Rval,shearIntercepts[File],shearModuli[File] = shearFit(Data[File]['Shear Strain'],Data[File]['Shear Stress (Pa)'],0,20)
-    print(File,': ','Shear Modulus (Pa)',shearModuli[File],'R value',Rval)
+    # print(File,': ','Shear Modulus (Pa)',shearModuli[File],'R value',Rval)
 
 steelShearMods = []
 aluminumShearMods = []
@@ -90,8 +90,8 @@ for File in Files:
         steelShearMods.append(shearModuli[File])
     else:
         aluminumShearMods.append(shearModuli[File])
-print('Steel Avg Shear [Pa]:',np.mean(steelShearMods),'std',np.std(steelShearMods))
-print('Aluminum Avg Shear [Pa]:',np.mean(aluminumShearMods),'std',np.std(aluminumShearMods))
+# print('Steel Avg Shear [Pa]:',np.mean(steelShearMods),'std',np.std(steelShearMods))
+# print('Aluminum Avg Shear [Pa]:',np.mean(aluminumShearMods),'std',np.std(aluminumShearMods))
 
 # Calculate yield radius with respect to angle
 for File in Files:
@@ -114,11 +114,11 @@ for File in Files:
         yP = next(i for i, x in enumerate(Data[File]['Angle (deg) ']) if Data[File]['Yield Radii (m)'][i] < rodDia/2)
         aluminumYieldRads.append(Data[File]['Yield Radii (m)'][yP])
         aluminumYieldAngles.append(Data[File]['Angle (deg) '][yP])
-
-print('Steel Avg Yield Radius [m]:',np.mean(steelYieldRads),'std',np.std(steelYieldRads))
-print('Aluminum Avg Yield Radius [m]:',np.mean(aluminumYieldRads),'std',np.std(aluminumYieldRads))
-print('Steel Avg Yield Angle [deg]:',np.mean(steelYieldAngles),'std',np.std(steelYieldAngles))
-print('Aluminum Avg Yield Angle [deg]:',np.mean(aluminumYieldAngles),'std',np.std(aluminumYieldAngles))
+#
+# print('Steel Avg Yield Radius [m]:',np.mean(steelYieldRads),'std',np.std(steelYieldRads))
+# print('Aluminum Avg Yield Radius [m]:',np.mean(aluminumYieldRads),'std',np.std(aluminumYieldRads))
+# print('Steel Avg Yield Angle [deg]:',np.mean(steelYieldAngles),'std',np.std(steelYieldAngles))
+# print('Aluminum Avg Yield Angle [deg]:',np.mean(aluminumYieldAngles),'std',np.std(aluminumYieldAngles))
 
 # Plot yield radius vs twist angle
 fig = plt.figure(3)
@@ -163,30 +163,45 @@ steelTransAngleNom,steelElasticContrThNom,anglesSteelThNom, torqueSteelThNom = t
 aluminumTransAngleNom,aluminumElasticContrThNom,anglesAluminumThNom, torqueAluminumThNom = theoreticalPlot(15500*(np.pi/180),length,rodDia,aluminumYield,aluminumElasticMod,aluminumPoisson,aluminumHardCoeffNom,aluminumHardExpNom)
 steelTransAngleEx,steelElasticContrThEx,anglesSteelThEx, torqueSteelThEx = theoreticalPlot(8500*(np.pi/180),length,rodDia,steelYield,steelElasticMod,steelPoisson,steelHardCoeffNom,steelHardExpEx)
 aluminumTransAngleEx,aluminumElasticContrThEx,anglesAluminumThEx, torqueAluminumThEx = theoreticalPlot(15500*(np.pi/180),length,rodDia,aluminumYield,aluminumElasticMod,aluminumPoisson,aluminumHardCoeffEx,aluminumHardExpEx)
-
-print('Steel Transition angle:',steelTransAngleNom*(180/np.pi))
-print('Aluminum Transition angle:',aluminumTransAngleNom*(180/np.pi))
+#
+# print('Steel Transition angle:',steelTransAngleNom*(180/np.pi))
+# print('Aluminum Transition angle:',aluminumTransAngleNom*(180/np.pi))
 
 # R values calculation
 compAlLength = np.min([len(Data[Aluminum[0]]),len(Data[Aluminum[1]]),len(Data[Aluminum[2]])])
 compSteelLength = np.min([len(Data[Steel[0]]),len(Data[Steel[1]]),len(Data[Steel[2]])])
 
 def RvalCalc(Data,specimenType,endpoint,length,rodDia,yieldStrength,elasticMod,poissons,hardenCoeff,hardenExp):
-    angles = Data[specimenType[0]]['Angle (rad)']
-    shearMod = elasticMod/(2 + 2*poissons)
-    thetaTrans = 2*yieldStrength*length/(shearMod*rodDia*np.sqrt(3)) # rad
-    yP = next(i for i, x in enumerate(angles) if angles[i] > thetaTrans)
-    elasticRegion = angles[0:yP+1]
-    plasticRegion = angles[yP:endpoint-1]
-    rodYield = yieldStrength*length/(2*shearMod*plasticRegion)
-    elasticTorque = np.pi*shearMod*(rodDia**4)*elasticRegion/((2**5)*length)
-    plasticTorque = (np.pi*yieldStrength*rodYield**3)/(2*np.sqrt(3)) + ((2*np.pi*hardenCoeff)/((hardenExp+3)*np.sqrt(3)))*((plasticRegion/(length*np.sqrt(3)))**hardenExp)*((rodDia/2)**(hardenExp+3) - rodYield**(hardenExp+3))
-    torques = np.concatenate([elasticTorque,plasticTorque]) # calculated a properly indexed array of torques
     Rvals =[]
+    Rsum = np.zeros(len(specimenType))
+    z = 0
     for file in specimenType:
-        m, c, R, P, Err = linregress(torques,Data[file]['Torque (N.m)'][0:endpoint]) 
-        Rvals.append(R)
-    print(Rvals)
+        angles = Data[specimenType[z]]['Angle (rad)']
+        shearMod = elasticMod / (2 + 2 * poissons)
+        thetaTrans = 2 * yieldStrength * length / (shearMod * rodDia * np.sqrt(3))  # rad
+        yP = next(i for i, x in enumerate(angles) if angles[i] > thetaTrans)
+        elasticRegion = angles[0:yP]
+        plasticRegion = angles[yP:len(Data[file]['Torque (N.m)'])]
+        rodYield = yieldStrength * length / (2 * shearMod * plasticRegion)
+        elasticTorque = np.pi * shearMod * (rodDia ** 4) * elasticRegion / ((2 ** 5) * length)
+        plasticTorque = (np.pi * yieldStrength * rodYield ** 3) / (2 * np.sqrt(3)) + (
+                    (2 * np.pi * hardenCoeff) / ((hardenExp + 3) * np.sqrt(3))) * (
+                                    (plasticRegion / (length * np.sqrt(3))) ** hardenExp) * (
+                                    (rodDia / 2) ** (hardenExp + 3) - rodYield ** (hardenExp + 3))
+        torques = np.concatenate([elasticTorque, plasticTorque])  # calculated a properly indexed array of torques
+        plt.plot(angles[0:len(Data[file]['Torque (N.m)'])],torques)
+        plt.plot(angles[0:len(Data[file]['Torque (N.m)'])],Data[file]['Torque (N.m)'], label = file)
+        plt.legend()
+        #plt.show()
+
+        for i in range(len(Data[specimenType[z]]['Torque (N.m)'])):
+            Rsum[z] = Rsum[z] + (torques[i]-Data[file]['Torque (N.m)'][i])**2
+        print(len(Data[file]['Torque (N.m)']))
+        print(len(torques))
+        Rvals += [np.sqrt((Rsum[z])/len(Data[file]['Torque (N.m)']))]
+        z = z+1
+
+    # print(Rvals)
     Rval = np.mean(Rvals)
     return Rval
 
@@ -194,6 +209,7 @@ thRvalCalcAl = RvalCalc(Data,Aluminum,compAlLength,length,rodDia,aluminumYield,a
 exRvalCalcAl = RvalCalc(Data,Aluminum,compAlLength,length,rodDia,aluminumYield,aluminumElasticMod,aluminumPoisson,aluminumHardCoeffEx,aluminumHardExpEx)
 thRvalCalcSteel = RvalCalc(Data,Steel,compSteelLength,length,rodDia,steelYield,steelElasticMod,steelPoisson,steelHardCoeffNom,steelHardExpNom)
 exRvalCalcSteel = RvalCalc(Data,Steel,compSteelLength,length,rodDia,steelYield,steelElasticMod,steelPoisson,steelHardCoeffEx,steelHardExpEx)
+
 print('Aluminum Rval theoretical:',thRvalCalcAl)
 print('Aluminum Rval experimental:',exRvalCalcAl)
 print('Steel Rval theoretical:',thRvalCalcSteel)
@@ -211,6 +227,7 @@ plt.title("Aluminum Torque vs Twist Angle")
 plt.ylabel('Torque (N.m)')
 plt.xlabel('Twist Angle (deg)')
 plt.legend()
+
 
 fig = plt.figure(6)
 ax = fig.gca()
@@ -264,6 +281,8 @@ plt.title("Aluminum Torque vs Twist Angle")
 plt.ylabel('Torque (N.m)')
 plt.xlabel('Twist Angle (deg)')
 plt.legend()
+
+
 
 fig = plt.figure(9)
 ax = fig.gca()
