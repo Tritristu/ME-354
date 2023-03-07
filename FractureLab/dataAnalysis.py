@@ -9,7 +9,14 @@ Tiyield = 240e6 # Pa
 PCyield = 66e6
 PMMAyield = 70e6
 
-# reading data files
+# reading data files FOR SANFORD
+# Files = [x for x in listdir('.') if '.csv' in x]
+# Ti0 = [x for x in listdir('.') if 'Ti 0deg' in x]
+# Ti90 = [x for x in listdir('.') if 'Ti 90deg' in x]
+# PMMA = [x for x in listdir('.') if 'PMMA' in x]
+# PC = [x for x in listdir('.') if 'PC' in x]
+
+# reading data files FOR ERIC
 Files = [x for x in listdir('FractureLab') if '.csv' in x]
 Ti0 = [x for x in listdir('FractureLab') if 'Ti 0deg' in x]
 Ti90 = [x for x in listdir('FractureLab') if 'Ti 90deg' in x]
@@ -18,6 +25,7 @@ PC = [x for x in listdir('FractureLab') if 'PC' in x]
 
 Data = {x:{} for x in Files}
 for File in Files:
+    # Data[File] = pd.read_csv(File) FOR SANFORD
     Data[File] = pd.read_csv('FractureLab/' + File)
 
 # plotting force vs displacement
@@ -25,6 +33,7 @@ fig = plt.figure(1)
 ax = fig.gca()
 for File in Ti0:
     ax.plot(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4])
+    #ax.axvline(x=Data[File]['Displacement (mm) '][450])
 ax.set_xlim(left = 0)
 ax.set_ylim(bottom = 0)
 plt.title("Titanium 0\u00b0 Force vs Displacement")
@@ -36,6 +45,7 @@ fig = plt.figure(2)
 ax = fig.gca()
 for File in Ti90:
     ax.plot(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4])
+    #ax.axvline(x=Data[File]['Displacement (mm) '][475])
 ax.set_xlim(left = 0)
 ax.set_ylim(bottom = 0)
 plt.title("Titanium 90\u00b0 Force vs Displacement")
@@ -47,6 +57,7 @@ fig = plt.figure(3)
 ax = fig.gca()
 for File in PMMA:
     ax.plot(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4])
+    #ax.axvline(x=Data[File]['Displacement (mm) '][60])
 ax.set_xlim(left = 0)
 ax.set_ylim(bottom = 0)
 plt.title("PMMA Force vs Displacement")
@@ -58,6 +69,7 @@ fig = plt.figure(4)
 ax = fig.gca()
 for File in PC:
     ax.plot(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4])
+    #ax.axvline(x=Data[File]['Displacement (mm) '][700])
 ax.set_xlim(left = 0)
 ax.set_ylim(bottom = 0)
 plt.title("Polycarb Force vs Displacement")
@@ -75,13 +87,13 @@ def slopeFit(displacement, force, a, b):
 
 for file in Files:
     if 'Ti 0deg' in file:
-        Data[file]['slope'],Data[file]['intercept'],Data[file]['Critical Load (N)'],Data[file]['rval'] = slopeFit(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],0,100) #revise bounds later
+        Data[file]['slope'],Data[file]['intercept'],Data[file]['Critical Load (N)'],Data[file]['rval'] = slopeFit(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,450) #revise bounds later
     elif 'Ti 90deg' in file:
-        Data[file]['slope'],Data[file]['intercept'],Data[file]['Critical Load (N)'],Data[file]['rval'] = slopeFit(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],0,100) #revise bounds later
+        Data[file]['slope'],Data[file]['intercept'],Data[file]['Critical Load (N)'],Data[file]['rval'] = slopeFit(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,475) #revise bounds later
     elif 'PC' in file:
-        Data[file]['slope'],Data[file]['intercept'],test,Data[file]['rval'] = slopeFit(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],0,100) #revise bounds later
+        Data[file]['slope'],Data[file]['intercept'],test,Data[file]['rval'] = slopeFit(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,700) #revise bounds later
     else:
-        Data[file]['slope'],Data[file]['intercept'],test,Data[file]['rval'] = slopeFit(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],0,100) #revise bounds later
+        Data[file]['slope'],Data[file]['intercept'],test,Data[file]['rval'] = slopeFit(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],60,135) #revise bounds later
 
 
 # Calculating max loads/critical load for plastic
