@@ -1,4 +1,4 @@
-﻿Time (s),Displacement (mm) ,Load (N),,Width (mm),Base (mm),Final crack length (mm)
+﻿Time (s),Displacement (mm) ,Load (N),Width (mm),Base (mm),Final crack length (mm)
 0,0.0023,-1.14478,25,8.53,7.1
 0.1,0.00231,-1.15156
 0.2,0.00235,-0.84531
