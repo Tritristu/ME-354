@@ -5,9 +5,9 @@ from os import listdir
 from scipy.stats import linregress
 
 # Constants
-Tiyield = 240e6 # Pa
-PCyield = 66e6
-PMMAyield = 70e6
+Tiyield = 910e6 # Pa
+PCyield = 63.3e6
+PMMAyield = 40.2e6
 
 # reading data files FOR SANFORD
 # Files = [x for x in listdir('.') if '.csv' in x]
@@ -28,56 +28,6 @@ for File in Files:
     # Data[File] = pd.read_csv(File) FOR SANFORD
     Data[File] = pd.read_csv('FractureLab/' + File)
 
-# plotting force vs displacement
-fig = plt.figure(1)
-ax = fig.gca()
-for File in Ti0:
-    ax.plot(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4])
-    #ax.axvline(x=Data[File]['Displacement (mm) '][450])
-ax.set_xlim(left = 0)
-ax.set_ylim(bottom = 0)
-plt.title("Titanium 0\u00b0 Force vs Displacement")
-plt.ylabel('Load (N)')
-plt.xlabel('Displacement (mm)')
-plt.legend()
-
-fig = plt.figure(2)
-ax = fig.gca()
-for File in Ti90:
-    ax.plot(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4])
-    #ax.axvline(x=Data[File]['Displacement (mm) '][475])
-ax.set_xlim(left = 0)
-ax.set_ylim(bottom = 0)
-plt.title("Titanium 90\u00b0 Force vs Displacement")
-plt.ylabel('Load (N)')
-plt.xlabel('Displacement (mm)')
-plt.legend()
-
-fig = plt.figure(3)
-ax = fig.gca()
-for File in PMMA:
-    ax.plot(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4])
-    #ax.axvline(x=Data[File]['Displacement (mm) '][60])
-ax.set_xlim(left = 0)
-ax.set_ylim(bottom = 0)
-plt.title("PMMA Force vs Displacement")
-plt.ylabel('Load (N)')
-plt.xlabel('Displacement (mm)')
-plt.legend()
-
-fig = plt.figure(4)
-ax = fig.gca()
-for File in PC:
-    ax.plot(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4])
-    #ax.axvline(x=Data[File]['Displacement (mm) '][700])
-ax.set_xlim(left = 0)
-ax.set_ylim(bottom = 0)
-plt.title("Polycarb Force vs Displacement")
-plt.ylabel('Load (N)')
-plt.xlabel('Displacement (mm)')
-plt.legend()
-
-
 # Finding Sample Elastic slopes
 def slopeFit(displacement, force, a, b):
     slope, intercept, R, P, Err = linregress(displacement[a:b], force[a:b])
@@ -85,6 +35,7 @@ def slopeFit(displacement, force, a, b):
     critLoad = force[yP]
     return slope, intercept, critLoad, R
 
+# Calculating slopes, Titanium critical loads
 for file in Files:
     if 'Ti 0deg' in file:
         Data[file]['slope'],Data[file]['intercept'],Data[file]['Critical Load (N)'],Data[file]['rval'] = slopeFit(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,450) #revise bounds later
@@ -95,13 +46,13 @@ for file in Files:
     else:
         Data[file]['slope'],Data[file]['intercept'],test,Data[file]['rval'] = slopeFit(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],60,135) #revise bounds later
 
-
 # Calculating max loads/critical load for plastic
 for file in Files:
     Data[file]['Max Load (N)'] = max(Data[file]['Load (N)'])
     if file in np.concatenate([PC,PMMA]):
         Data[file]['Critical Load (N)'] = Data[file]['Max Load (N)']
 
+# Calculating geometry factors, (conditional) fracture toughnesses
 for file in Files:
     width = Data[file]['Width (mm)'][0]*1e-3
     a = Data[file]['Final crack length (mm)'][0]*1e-3
@@ -120,8 +71,68 @@ for file in Files:
             Data[file]['Fracture Toughness'] = float("nan")
     else:
         Data[file]['Fracture Toughness'] = float("nan")
-    print(file[0:len(file)-4],'Critical Load (N):',Data[file]['Critical Load (N)'][0],'Conditional Crack Toughness:',Data[file]['Conditional Crack Toughness'][0],'Fracture Toughness:',Data[file]['Fracture Toughness'][0])
+    print(file[0:len(file)-4],'Critical Load (N):',Data[file]['Critical Load (N)'][0],'F:',geometryFunc,'Conditional Crack Toughness:',Data[file]['Conditional Crack Toughness'][0],'Fracture Toughness:',Data[file]['Fracture Toughness'][0])
 
+# plotting force vs displacement
+fig = plt.figure(1)
+ax = fig.gca()
+for File in Ti0:
+    ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
+    #ax.axvline(x=Data[File]['Displacement (mm) '][450])
+for File in Ti0:
+    displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
+    ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope')
+ax.set_xlim(left = 0,right=0.4)
+ax.set_ylim(bottom = 0,top=20000)
+plt.title("Titanium 0\u00b0 Force vs Displacement")
+plt.ylabel('Load (N)')
+plt.xlabel('Displacement (mm)')
+plt.legend()
+
+fig = plt.figure(2)
+ax = fig.gca()
+for File in Ti90:
+    ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
+    #ax.axvline(x=Data[File]['Displacement (mm) '][475])
+for File in Ti90:
+    displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
+    ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope')
+ax.set_xlim(left = 0,right=0.5)
+ax.set_ylim(bottom = 0,top=20000)
+plt.title("Titanium 90\u00b0 Force vs Displacement")
+plt.ylabel('Load (N)')
+plt.xlabel('Displacement (mm)')
+plt.legend()
+
+fig = plt.figure(3)
+ax = fig.gca()
+for File in PMMA:
+    ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
+    #ax.axvline(x=Data[File]['Displacement (mm) '][60])
+for File in PMMA:
+    displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
+    ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope')
+ax.set_xlim(left = 0,right=0.2)
+ax.set_ylim(bottom = 0,top=300)
+plt.title("PMMA Force vs Displacement")
+plt.ylabel('Load (N)')
+plt.xlabel('Displacement (mm)')
+plt.legend()
+
+fig = plt.figure(4)
+ax = fig.gca()
+for File in PC:
+    ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
+    #ax.axvline(x=Data[File]['Displacement (mm) '][700])
+for File in PC:
+    displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
+    ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope')
+ax.set_xlim(left = 0)
+ax.set_ylim(bottom = 0)
+plt.title("Polycarb Force vs Displacement")
+plt.ylabel('Load (N)')
+plt.xlabel('Displacement (mm)')
+plt.legend()
 plt.show()
 
 
