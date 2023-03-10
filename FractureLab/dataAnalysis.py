@@ -32,25 +32,26 @@ for File in Files:
 def slopeFitPlas(displacement, force, a, b):
     slope, intercept, R, P, Err = linregress(displacement[a:b], force[a:b])
     yP = 5 + next(i for i, x in enumerate(displacement) if force[i+5] < 0.95*slope*x + intercept)
-    critLoad = force[yP]
-    return slope, intercept, critLoad, R
+    return yP,slope, intercept, R
 
 def slopeFitTi(displacement, force, a, b):
     slope, intercept, R, P, Err = linregress(displacement[a:b], force[a:b])
     yP = 50 + next(i for i, x in enumerate(displacement) if force[i+50] < 0.95*slope*x + intercept)
-    critLoad = force[yP]
-    return yP,slope, intercept, critLoad, R
+    return yP,slope, intercept, R
 
 # Calculating slopes, Titanium critical loads
 for file in Files:
     if 'Ti 0deg' in file:
-        Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],Data[file]['Critical Load (N)'],Data[file]['rval'] = slopeFitTi(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,450) #revise bounds later
+        Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],Data[file]['rval'] = slopeFitTi(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,450)
+        Data[file]['Critical Load (N)'] = Data[file]['Load (N)'][Data[file]['critpoint'][0]]
     elif 'Ti 90deg' in file:
-        Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],Data[file]['Critical Load (N)'],Data[file]['rval'] = slopeFitTi(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,475) #revise bounds later
+        Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],Data[file]['rval'] = slopeFitTi(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,475)
+        Data[file]['Critical Load (N)'] = Data[file]['Load (N)'][Data[file]['critpoint'][0]]
     elif 'PC' in file:
-        Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],test,Data[file]['rval'] = slopeFitPlas(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,700) #revise bounds later
+        Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],Data[file]['rval'] = slopeFitPlas(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,700)
     else:
-        Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],test,Data[file]['rval'] = slopeFitPlas(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],60,135) #revise bounds later
+        Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],Data[file]['rval'] = slopeFitPlas(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],60,135)
+    # print(Data[file]['critpoint'][0])
 
 # Calculating max loads/critical load for plastic
 for file in Files:
@@ -83,11 +84,13 @@ for file in Files:
 fig = plt.figure(1)
 ax = fig.gca()
 File = 'Ti 0deg 3.csv'
+critpoint = Data[File]['critpoint'][0]
 ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
 displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
 ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope',color='r')
-ax.set_xlim(left = 0,right=0.4)
-ax.set_ylim(bottom = 0,top=20000)
+ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Load (N)'][critpoint],label=File[:len(File)-4] + ' Critical Load',marker='*')
+# ax.set_xlim(left = 0,right=0.4)
+# ax.set_ylim(bottom = 0,top=20000)
 plt.title("Titanium 0\u00b0 Force vs Displacement")
 plt.ylabel('Load (N)')
 plt.xlabel('Displacement (mm)')
@@ -96,11 +99,13 @@ plt.legend()
 fig = plt.figure(2)
 ax = fig.gca()
 File = 'Ti 90deg 2.csv'
+critpoint = Data[File]['critpoint'][0]
 ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
 displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
 ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope',color='r')
-ax.set_xlim(left = 0,right=0.5)
-ax.set_ylim(bottom = 0,top=20000)
+ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Load (N)'][critpoint],label=File[:len(File)-4] + ' Critical Load',marker='*')
+# ax.set_xlim(left = 0,right=0.5)
+# ax.set_ylim(bottom = 0,top=20000)
 plt.title("Titanium 90\u00b0 Force vs Displacement")
 plt.ylabel('Load (N)')
 plt.xlabel('Displacement (mm)')
@@ -109,11 +114,13 @@ plt.legend()
 fig = plt.figure(3)
 ax = fig.gca()
 File = 'PMMA 1.csv'
+critpoint = Data[File]['critpoint'][0]
 ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
 displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
 ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope',color='r')
-ax.set_xlim(left = 0,right=0.2)
-ax.set_ylim(bottom = 0,top=300)
+ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Load (N)'][critpoint],label=File[:len(File)-4] + ' Critical Load',marker='*')
+# ax.set_xlim(left = 0,right=0.2)
+# ax.set_ylim(bottom = 0,top=300)
 plt.title("PMMA Force vs Displacement")
 plt.ylabel('Load (N)')
 plt.xlabel('Displacement (mm)')
@@ -122,11 +129,13 @@ plt.legend()
 fig = plt.figure(4)
 ax = fig.gca()
 File = 'PC 3.csv'
+critpoint = Data[File]['critpoint'][0]
 ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
 displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
 ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope',color='r')
-ax.set_xlim(left = 0)
-ax.set_ylim(bottom = 0)
+ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Load (N)'][critpoint],label=File[:len(File)-4] + ' Critical Load',marker='*')
+# ax.set_xlim(left = 0)
+# ax.set_ylim(bottom = 0)
 plt.title("Polycarb Force vs Displacement")
 plt.ylabel('Load (N)')
 plt.xlabel('Displacement (mm)')
