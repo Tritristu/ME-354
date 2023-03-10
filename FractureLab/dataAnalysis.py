@@ -9,41 +9,45 @@ Tiyield = 910e6 # Pa
 PCyield = 63.3e6
 PMMAyield = 40.2e6
 
-# reading data files FOR SANFORD
-# Files = [x for x in listdir('.') if '.csv' in x]
-# Ti0 = [x for x in listdir('.') if 'Ti 0deg' in x]
-# Ti90 = [x for x in listdir('.') if 'Ti 90deg' in x]
-# PMMA = [x for x in listdir('.') if 'PMMA' in x]
-# PC = [x for x in listdir('.') if 'PC' in x]
+#reading data files FOR SANFORD
+Files = [x for x in listdir('.') if '.csv' in x]
+Ti0 = [x for x in listdir('.') if 'Ti 0deg' in x]
+Ti90 = [x for x in listdir('.') if 'Ti 90deg' in x]
+PMMA = [x for x in listdir('.') if 'PMMA' in x]
+PC = [x for x in listdir('.') if 'PC' in x]
 
-# reading data files FOR ERIC
-Files = [x for x in listdir('FractureLab') if '.csv' in x]
-Ti0 = [x for x in listdir('FractureLab') if 'Ti 0deg' in x]
-Ti90 = [x for x in listdir('FractureLab') if 'Ti 90deg' in x]
-PMMA = [x for x in listdir('FractureLab') if 'PMMA' in x]
-PC = [x for x in listdir('FractureLab') if 'PC' in x]
+# # reading data files FOR ERIC
+# Files = [x for x in listdir('FractureLab') if '.csv' in x]
+# Ti0 = [x for x in listdir('FractureLab') if 'Ti 0deg' in x]
+# Ti90 = [x for x in listdir('FractureLab') if 'Ti 90deg' in x]
+# PMMA = [x for x in listdir('FractureLab') if 'PMMA' in x]
+# PC = [x for x in listdir('FractureLab') if 'PC' in x]
 
 Data = {x:{} for x in Files}
 for File in Files:
-    # Data[File] = pd.read_csv(File) FOR SANFORD
-    Data[File] = pd.read_csv('FractureLab/' + File)
+    Data[File] = pd.read_csv(File) #FOR SANFORD
+    # Data[File] = pd.read_csv('FractureLab/' + File)
 
 # Finding Sample Elastic slopes
 def slopeFitPlas(displacement, force, a, b):
     slope, intercept, R, P, Err = linregress(displacement[a:b], force[a:b])
     yP = 5 + next(i for i, x in enumerate(displacement) if force[i+5] < 0.95*slope*x + intercept)
-    return yP,slope, intercept, R
+    yP1 = yP-5
+    return yP1,slope, intercept, R
 
 def slopeFitTi(displacement, force, a, b):
     slope, intercept, R, P, Err = linregress(displacement[a:b], force[a:b])
     yP = 50 + next(i for i, x in enumerate(displacement) if force[i+50] < 0.95*slope*x + intercept)
-    return yP,slope, intercept, R
+    yP1 = yP-50
+    return yP1,slope, intercept, R
 
 # Calculating slopes, Titanium critical loads
 for file in Files:
     if 'Ti 0deg' in file:
         Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],Data[file]['rval'] = slopeFitTi(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,450)
         Data[file]['Critical Load (N)'] = Data[file]['Load (N)'][Data[file]['critpoint'][0]]
+        print(Data[file]['critpoint'][0], file)
+        print(Data[file]['Displacement (mm) '][Data[file]['critpoint'][0]])
     elif 'Ti 90deg' in file:
         Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],Data[file]['rval'] = slopeFitTi(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,475)
         Data[file]['Critical Load (N)'] = Data[file]['Load (N)'][Data[file]['critpoint'][0]]
@@ -51,7 +55,7 @@ for file in Files:
         Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],Data[file]['rval'] = slopeFitPlas(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],100,700)
     else:
         Data[file]['critpoint'],Data[file]['slope'],Data[file]['intercept'],Data[file]['rval'] = slopeFitPlas(Data[file]['Displacement (mm) '],Data[file]['Load (N)'],60,135)
-    # print(Data[file]['critpoint'][0])
+
 
 # Calculating max loads/critical load for plastic
 for file in Files:
@@ -78,7 +82,7 @@ for file in Files:
             Data[file]['Fracture Toughness'] = float("nan")
     else:
         Data[file]['Fracture Toughness'] = float("nan")
-    print(file[0:len(file)-4],'Critical Load (N):',Data[file]['Critical Load (N)'][0],'F:',geometryFunc,'Conditional Crack Toughness:',Data[file]['Conditional Crack Toughness'][0],'Fracture Toughness:',Data[file]['Fracture Toughness'][0])
+    #print(file[0:len(file)-4],'Critical Load (N):',Data[file]['Critical Load (N)'][0],'F:',geometryFunc,'Conditional Crack Toughness:',Data[file]['Conditional Crack Toughness'][0],'Fracture Toughness:',Data[file]['Fracture Toughness'][0])
 
 Ti0Load = []
 Ti0Crack = []
@@ -103,15 +107,15 @@ for File in Files:
         PCLoad.append(Data[File]['Critical Load (N)'][Data[File]['critpoint'][0]])
         PCCrack.append(Data[File]['Conditional Crack Toughness'][0])
 
-
-print('Ti 0deg Critical Load [N]:',np.mean(Ti0Load),'std',np.std(Ti0Load))
-print('Ti 0deg Conditional Fracture Toughness [MPa]:',np.mean(Ti0Crack),'std',np.std(Ti0Crack))
-print('Ti 90deg Critical Load [N]:',np.mean(Ti90Load),'std',np.std(Ti90Load))
-print('Ti 90deg Conditional Fracture Toughness [MPa]:',np.mean(Ti90Crack),'std',np.std(Ti90Crack))
-print('PMMA Critical Load [N]:',np.mean(PMMALoad),'std',np.std(PMMALoad))
-print('PMMA Conditional Fracture Toughness [MPa]:',np.mean(PMMACrack),'std',np.std(PMMACrack))
-print('PC Critical Load [N]:',np.mean(PCLoad),'std',np.std(PCLoad))
-print('PC Conditional Fracture Toughness [MPa]:',np.mean(PCCrack),'std',np.std(PCCrack))
+#
+# print('Ti 0deg Critical Load [N]:',np.mean(Ti0Load),'std',np.std(Ti0Load))
+# print('Ti 0deg Conditional Fracture Toughness [MPa]:',np.mean(Ti0Crack),'std',np.std(Ti0Crack))
+# print('Ti 90deg Critical Load [N]:',np.mean(Ti90Load),'std',np.std(Ti90Load))
+# print('Ti 90deg Conditional Fracture Toughness [MPa]:',np.mean(Ti90Crack),'std',np.std(Ti90Crack))
+# print('PMMA Critical Load [N]:',np.mean(PMMALoad),'std',np.std(PMMALoad))
+# print('PMMA Conditional Fracture Toughness [MPa]:',np.mean(PMMACrack),'std',np.std(PMMACrack))
+# print('PC Critical Load [N]:',np.mean(PCLoad),'std',np.std(PCLoad))
+# print('PC Conditional Fracture Toughness [MPa]:',np.mean(PCCrack),'std',np.std(PCCrack))
 
 
 # plotting force vs displacement
@@ -123,6 +127,7 @@ ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:l
 displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
 ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope',color='r')
 ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Critical Load (N)'][0],label=File[:len(File)-4] + ' Critical Load',marker='*')
+
 # ax.set_xlim(left = 0,right=0.4)
 # ax.set_ylim(bottom = 0,top=20000)
 plt.title("Titanium 0\u00b0 Force vs Displacement")
@@ -167,7 +172,8 @@ critpoint = Data[File]['critpoint'][0]
 ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
 displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
 ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope',color='r')
-ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Critical Load (N)'][0],label=File[:len(File)-4] + ' Critical Load',marker='*')
+ax.scatter(max(Data[File]['Displacement (mm) ']),Data[File]['Critical Load (N)'][0],label=File[:len(File)-4] + ' Critical Load',marker='*')
+
 # ax.set_xlim(left = 0)
 # ax.set_ylim(bottom = 0)
 plt.title("Polycarb Force vs Displacement")
