@@ -80,6 +80,40 @@ for file in Files:
         Data[file]['Fracture Toughness'] = float("nan")
     print(file[0:len(file)-4],'Critical Load (N):',Data[file]['Critical Load (N)'][0],'F:',geometryFunc,'Conditional Crack Toughness:',Data[file]['Conditional Crack Toughness'][0],'Fracture Toughness:',Data[file]['Fracture Toughness'][0])
 
+Ti0Load = []
+Ti0Crack = []
+Ti90Load = []
+Ti90Crack = []
+PMMALoad = []
+PMMACrack = []
+PCLoad = []
+PCCrack = []
+
+for File in Files:
+    if 'Ti 0deg' in File:
+        Ti0Load.append(Data[File]['Critical Load (N)'][Data[File]['critpoint'][0]])
+        Ti0Crack.append(Data[File]['Conditional Crack Toughness'][0])
+    elif 'Ti 90deg' in File:
+        Ti90Load.append(Data[File]['Critical Load (N)'][Data[File]['critpoint'][0]])
+        Ti90Crack.append(Data[File]['Conditional Crack Toughness'][0])
+    elif 'PMMA' in File:
+        PMMALoad.append(Data[File]['Critical Load (N)'][Data[File]['critpoint'][0]])
+        PMMACrack.append(Data[File]['Conditional Crack Toughness'][0])
+    else:
+        PCLoad.append(Data[File]['Critical Load (N)'][Data[File]['critpoint'][0]])
+        PCCrack.append(Data[File]['Conditional Crack Toughness'][0])
+
+
+print('Ti 0deg Critical Load [N]:',np.mean(Ti0Load),'std',np.std(Ti0Load))
+print('Ti 0deg Conditional Fracture Toughness [MPa]:',np.mean(Ti0Crack),'std',np.std(Ti0Crack))
+print('Ti 90deg Critical Load [N]:',np.mean(Ti90Load),'std',np.std(Ti90Load))
+print('Ti 90deg Conditional Fracture Toughness [MPa]:',np.mean(Ti90Crack),'std',np.std(Ti90Crack))
+print('PMMA Critical Load [N]:',np.mean(PMMALoad),'std',np.std(PMMALoad))
+print('PMMA Conditional Fracture Toughness [MPa]:',np.mean(PMMACrack),'std',np.std(PMMACrack))
+print('PC Critical Load [N]:',np.mean(PCLoad),'std',np.std(PCLoad))
+print('PC Conditional Fracture Toughness [MPa]:',np.mean(PCCrack),'std',np.std(PCCrack))
+
+
 # plotting force vs displacement
 fig = plt.figure(1)
 ax = fig.gca()
@@ -88,7 +122,7 @@ critpoint = Data[File]['critpoint'][0]
 ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
 displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
 ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope',color='r')
-ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Load (N)'][critpoint],label=File[:len(File)-4] + ' Critical Load',marker='*')
+ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Critical Load (N)'][0],label=File[:len(File)-4] + ' Critical Load',marker='*')
 # ax.set_xlim(left = 0,right=0.4)
 # ax.set_ylim(bottom = 0,top=20000)
 plt.title("Titanium 0\u00b0 Force vs Displacement")
@@ -103,7 +137,7 @@ critpoint = Data[File]['critpoint'][0]
 ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
 displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
 ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope',color='r')
-ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Load (N)'][critpoint],label=File[:len(File)-4] + ' Critical Load',marker='*')
+ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Critical Load (N)'][0],label=File[:len(File)-4] + ' Critical Load',marker='*')
 # ax.set_xlim(left = 0,right=0.5)
 # ax.set_ylim(bottom = 0,top=20000)
 plt.title("Titanium 90\u00b0 Force vs Displacement")
@@ -118,7 +152,7 @@ critpoint = Data[File]['critpoint'][0]
 ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
 displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
 ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope',color='r')
-ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Load (N)'][critpoint],label=File[:len(File)-4] + ' Critical Load',marker='*')
+ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Critical Load (N)'][0],label=File[:len(File)-4] + ' Critical Load',marker='*')
 # ax.set_xlim(left = 0,right=0.2)
 # ax.set_ylim(bottom = 0,top=300)
 plt.title("PMMA Force vs Displacement")
@@ -133,7 +167,7 @@ critpoint = Data[File]['critpoint'][0]
 ax.scatter(Data[File]['Displacement (mm) '],Data[File]['Load (N)'],label=File[:len(File)-4],marker='.')
 displacements = np.linspace(0,max(Data[File]['Displacement (mm) ']),num=len(Data[File]['Displacement (mm) ']))
 ax.plot(displacements,0.95*Data[File]['slope']*displacements + Data[File]['intercept'],label=File[:len(File)-4] + ' 95% Slope',color='r')
-ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Load (N)'][critpoint],label=File[:len(File)-4] + ' Critical Load',marker='*')
+ax.scatter(Data[File]['Displacement (mm) '][critpoint],Data[File]['Critical Load (N)'][0],label=File[:len(File)-4] + ' Critical Load',marker='*')
 # ax.set_xlim(left = 0)
 # ax.set_ylim(bottom = 0)
 plt.title("Polycarb Force vs Displacement")
@@ -141,18 +175,3 @@ plt.ylabel('Load (N)')
 plt.xlabel('Displacement (mm)')
 plt.legend()
 plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
